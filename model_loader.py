@@ -92,6 +92,22 @@ class NunchakuModelLoader:
 
             torch_dtype = torch.bfloat16 if self.device == "cuda" else torch.float32
 
+            # Attempt to load external text encoder
+            try:
+                from transformers import CLIPTextModel
+
+                text_encoder = CLIPTextModel.from_pretrained(
+                    "RedHatAI/Qwen2.5-VL-7B-Instruct-FP8-Dynamic",
+                    torch_dtype=torch_dtype,
+                )
+                logger.info("External text encoder loaded successfully.")
+            except Exception as e:
+                logger.error(
+                    "Failed to load external text encoder 'RedHatAI/Qwen2.5-VL-7B-Instruct-FP8-Dynamic': %s",
+                    e,
+                )
+                return False
+
             # Load the pipeline from the single quantized file
             try:
                 if _scipy_available:
@@ -99,6 +115,7 @@ class NunchakuModelLoader:
                         model_path,
                         torch_dtype=torch_dtype,
                         use_safetensors=True,
+                        text_encoder=text_encoder,
                     )
                     # Prefer DPM++ 2M when SciPy is available
                     self.pipeline.scheduler = _Scheduler.from_config(
@@ -118,6 +135,7 @@ class NunchakuModelLoader:
                         torch_dtype=torch_dtype,
                         use_safetensors=True,
                         scheduler=scheduler,
+                        text_encoder=text_encoder,
                     )
                 logger.info("Pipeline loaded successfully from single file.")
             except Exception as e:
