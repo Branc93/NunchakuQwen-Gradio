@@ -10,29 +10,25 @@ from typing import Optional, Tuple, Union
 import numpy as np
 from PIL import Image
 
-# Import diffusers components for real image generation.  DPMSolver requires
-# SciPy, which is not available in all environments (e.g., default Windows
-# installs).  Try to use it when possible, but fall back to a scheduler that
-# doesn't depend on SciPy if the import fails.
-from diffusers import DiffusionPipeline
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-try:
-    from diffusers import DPMSolverMultistepScheduler as _Scheduler
-except Exception as e:  # pragma: no cover - best effort import
-    from diffusers import EulerDiscreteScheduler as _Scheduler
+# ---------------------------------------------------------------------------
+# Verify SciPy availability before importing diffusers components. Diffusers
+# schedulers such as DPMSolver depend on SciPy which might be missing in some
+# environments (e.g. default Windows installs).
+# ---------------------------------------------------------------------------
+try:  # pragma: no cover - best effort detection
+    import scipy  # noqa: F401
+    _scipy_available = True
+except Exception as e:  # pragma: no cover - system-dependent
+    _scipy_available = False
     logger.warning(
-        "DPMSolverMultistepScheduler unavailable (%s); using EulerDiscreteScheduler",
+        "SciPy not available (%s). Install SciPy>=1.10 for DPMSolver support; "
+        "falling back to EulerDiscreteScheduler.",
         e,
     )
-
-from diffusers.utils import logging as diffusers_logging
-
-# Reduce diffusers logging verbosity
-diffusers_logging.set_verbosity_info()
 
 class NunchakuModelLoader:
     """Handles loading and inference with real Qwen-Image models."""
@@ -78,31 +74,63 @@ class NunchakuModelLoader:
         try:
             logger.info(f"Loading real Qwen-Image model: {model_key}")
 
+            # Import diffusers components lazily after verifying SciPy availability
+            from diffusers.utils import logging as diffusers_logging
+            diffusers_logging.set_verbosity_info()
+
+            if _scipy_available:
+                from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler as _Scheduler
+            else:
+                from diffusers import StableDiffusionPipeline, EulerDiscreteScheduler as _Scheduler
+                logger.warning(
+                    "SciPy missing; using EulerDiscreteScheduler. Install SciPy>=1.10 for DPMSolver support."
+                )
+
             # FIX: The original code was loading the base model from Hugging Face instead of the
             # downloaded quantized model. This uses the local model file as intended.
             logger.info(f"Loading model from local file: {model_path}")
 
+            torch_dtype = torch.bfloat16 if self.device == "cuda" else torch.float32
+
             # Load the pipeline from the single quantized file
             try:
-                self.pipeline = DiffusionPipeline.from_single_file(
-                    model_path,
-                    torch_dtype=torch.bfloat16 if self.device == "cuda" else torch.float32,
-                    use_safetensors=True
-                )
+                if _scipy_available:
+                    self.pipeline = StableDiffusionPipeline.from_single_file(
+                        model_path,
+                        torch_dtype=torch_dtype,
+                        use_safetensors=True,
+                    )
+                    # Prefer DPM++ 2M when SciPy is available
+                    self.pipeline.scheduler = _Scheduler.from_config(
+                        self.pipeline.scheduler.config
+                    )
+                else:
+                    # Build Euler scheduler manually to avoid SciPy dependency
+                    scheduler = _Scheduler(
+                        beta_start=0.00085,
+                        beta_end=0.012,
+                        beta_schedule="scaled_linear",
+                        timestep_spacing="leading",
+                        steps_offset=1,
+                    )
+                    self.pipeline = StableDiffusionPipeline.from_single_file(
+                        model_path,
+                        torch_dtype=torch_dtype,
+                        use_safetensors=True,
+                        scheduler=scheduler,
+                    )
                 logger.info("Pipeline loaded successfully from single file.")
             except Exception as e:
-                logger.error(f"Failed to load pipeline from single file: {e}")
+                if not _scipy_available:
+                    logger.error(
+                        "Failed to load pipeline without SciPy: %s. Consider installing SciPy>=1.10.",
+                        e,
+                    )
+                else:
+                    logger.error(f"Failed to load pipeline from single file: {e}")
                 return False
 
-            # Optimize the pipeline
-            try:
-                # Prefer DPM++ 2M when available; otherwise the fallback scheduler
-                self.pipeline.scheduler = _Scheduler.from_config(
-                    self.pipeline.scheduler.config
-                )
-                logger.info(f"Scheduler set to {_Scheduler.__name__}")
-            except Exception as e:
-                logger.warning(f"Failed to configure scheduler: {e}")
+            # Optimize the pipeline (no scheduler configuration needed here if SciPy unavailable)
 
             # Move to device
             try:
