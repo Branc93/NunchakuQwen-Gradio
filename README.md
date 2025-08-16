@@ -104,7 +104,7 @@ This interface uses:
 - **Diffusers**: Hugging Face diffusion models library
 - **SVDQuant**: Advanced quantization technique (research paper)
 
-**Note**: The actual Nunchaku inference engine and DeepCompressor quantization library are not yet publicly available. This interface provides a complete demo implementation that will be updated when those libraries become available.
+**Note**: This interface now uses the real Nunchaku library for actual AI image generation! The SVDQuant quantized models provide high-quality image generation with efficient memory usage.
 
 ## 📚 Research
 

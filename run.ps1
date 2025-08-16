@@ -49,16 +49,16 @@ try {
     exit 1
 }
 
-# Install/upgrade requirements
-Write-Host "📥 Installing/upgrading requirements..." -ForegroundColor Yellow
+# Install/upgrade runtime requirements (preserving PyTorch CUDA version)
+Write-Host "📥 Installing/upgrading runtime requirements..." -ForegroundColor Yellow
 try {
-    pip install -r requirements.txt --upgrade
+    pip install -r requirements-runtime.txt --upgrade
     if ($LASTEXITCODE -ne 0) {
-        throw "Failed to install requirements"
+        throw "Failed to install runtime requirements"
     }
-    Write-Host "✅ Requirements installed successfully" -ForegroundColor Green
+    Write-Host "✅ Runtime requirements installed successfully" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Error: Failed to install requirements" -ForegroundColor Red
+    Write-Host "❌ Error: Failed to install runtime requirements" -ForegroundColor Red
     Read-Host "Press Enter to exit"
     exit 1
 }

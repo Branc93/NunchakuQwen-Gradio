@@ -26,9 +26,9 @@ REM Activate virtual environment
 echo Activating virtual environment...
 call venv\Scripts\activate.bat
 
-REM Install/upgrade requirements
-echo Installing/upgrading requirements...
-pip install -r requirements.txt --upgrade
+REM Install/upgrade runtime requirements (preserving PyTorch CUDA version)
+echo Installing/upgrading runtime requirements...
+pip install -r requirements-runtime.txt --upgrade
 
 REM Launch the application
 echo.

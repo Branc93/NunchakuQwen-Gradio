@@ -66,6 +66,7 @@ Navigate to: `http://localhost:7860`
 ## 🆘 Need Help?
 
 - **Test Installation**: `python test_installation.py`
+- **Check PyTorch CUDA**: `python check_pytorch.py`
 - **Check GPU**: The interface will automatically detect your best device
 - **Memory Issues**: Use smaller models or lower resolutions
 - **Slow Generation**: Reduce inference steps or use Rank 32 models

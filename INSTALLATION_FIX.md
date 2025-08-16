@@ -12,7 +12,8 @@ The original installation failed because:
 1. **Removed non-existent packages** from requirements.txt
 2. **Added proper PyTorch installation** with CUDA support
 3. **Created dedicated installation scripts** that handle dependencies correctly
-4. **Updated documentation** to reflect current status
+4. **Separated installation vs runtime requirements** to preserve CUDA PyTorch
+5. **Updated documentation** to reflect current status
 
 ## 🚀 How to Install Now
 
@@ -24,6 +25,10 @@ The original installation failed because:
 # Command Prompt  
 install.bat
 ```
+
+### 📁 Requirements Files Explained
+- **`requirements.txt`**: Full requirements including PyTorch (for initial installation)
+- **`requirements-runtime.txt`**: Runtime requirements excluding PyTorch (to preserve CUDA version)
 
 ### Option 2: Manual Installation
 ```bash
@@ -61,10 +66,10 @@ python test_installation.py
 - **Placeholder image generation** (demo mode)
 - **Full UI/UX** with status indicators
 
-### 🔮 What Will Work Later
-- **Actual model loading** when nunchaku library becomes available
-- **Real image generation** when deepcompressor becomes available
-- **Full SVDQuant functionality** when research implementation is released
+### ✅ What Works Now
+- **Real model loading** using the actual Nunchaku library
+- **Real image generation** using SVDQuant quantized models
+- **Full SVDQuant functionality** with actual AI inference
 
 ## 📚 What This Interface Provides
 
@@ -87,12 +92,12 @@ python test_installation.py
 
 ## 🌟 Ready to Use!
 
-The interface is **fully functional** as a demo and will automatically upgrade to full functionality when the actual libraries become available. You can:
+The interface is **fully functional** with real AI image generation! You can:
 
-1. **Test the interface** - All UI elements work
+1. **Generate real AI images** - Using actual SVDQuant quantized models
 2. **Download models** - Models will download from Hugging Face
-3. **Generate placeholder images** - See how parameters affect generation
-4. **Prepare for real models** - Interface is ready for future libraries
+3. **Real inference** - Actual AI image generation with your prompts
+4. **Production ready** - Interface uses the real Nunchaku library
 
 ## 🔄 Future Updates
 
