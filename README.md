@@ -127,6 +127,9 @@ Based on the paper: [SVDQuant: Absorbing Outliers by Low-Rank Components for 4-B
 2. **CUDA out of memory**: Reduce image dimensions or use a lower-rank model
 3. **Slow generation**: Use fewer inference steps or a lower-rank model
 4. **Model loading fails**: Ensure the model file was downloaded completely
+5. **SciPy/NumPy compatibility errors**: The interface now falls back to a scheduler
+   that doesn't require SciPy. Install a compatible SciPy version if you want to
+   use DPMSolver-based schedulers.
 
 ### Performance Tips:
 
