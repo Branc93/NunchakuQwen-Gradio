@@ -122,12 +122,14 @@ class NunchakuModelLoader:
                 logger.info("Pipeline loaded successfully from single file.")
             except Exception as e:
                 if not _scipy_available:
-                    logger.error(
-                        "Failed to load pipeline without SciPy: %s. Consider installing SciPy>=1.10.",
-                        e,
+                    logger.exception(
+                        f"Failed to load pipeline without SciPy for model {model_key} from {model_path}. "
+                        "Consider installing SciPy>=1.10.",
                     )
                 else:
-                    logger.error(f"Failed to load pipeline from single file: {e}")
+                    logger.exception(
+                        f"Failed to load pipeline from single file {model_path} for model {model_key}"
+                    )
                 return False
 
             # Optimize the pipeline (no scheduler configuration needed here if SciPy unavailable)
@@ -159,7 +161,9 @@ class NunchakuModelLoader:
             return True
 
         except Exception as e:
-            logger.error(f"Error loading model {model_key}: {str(e)}")
+            logger.exception(
+                f"Error loading model {model_key} from {model_path}: {e}"
+            )
             return False
 
     def generate_image(self,
@@ -259,13 +263,15 @@ class NunchakuModelLoader:
                 return success_msg, image
 
             except Exception as e:
-                error_msg = f"Error during image generation: {str(e)}"
-                logger.error(error_msg)
+                error_msg = (
+                    f"Error during image generation for model {model_key} with prompt '{prompt}': {e}"
+                )
+                logger.exception(error_msg)
                 return error_msg, None
 
         except Exception as e:
-            error_msg = f"Error generating image: {str(e)}"
-            logger.error(error_msg)
+            error_msg = f"Error generating image for model {model_key}: {e}"
+            logger.exception(error_msg)
             return error_msg, None
 
     def unload_model(self):
@@ -292,7 +298,9 @@ class NunchakuModelLoader:
                 return True
 
         except Exception as e:
-            logger.error(f"Error unloading model: {str(e)}")
+            logger.exception(
+                f"Error unloading model {self.current_model}: {e}"
+            )
             return False
 
     def get_model_info(self, model_key: str) -> dict:
