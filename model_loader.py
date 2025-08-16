@@ -24,7 +24,7 @@ diffusers_logging.set_verbosity_info()
 
 class NunchakuModelLoader:
     """Handles loading and inference with real Qwen-Image models."""
-    
+
     def __init__(self):
         self.models_dir = Path("models")
         self.models_dir.mkdir(exist_ok=True)
@@ -32,13 +32,13 @@ class NunchakuModelLoader:
         self.model_loaded = False
         self.device = self._get_device()
         self.pipeline = None
-        
+
         # Positive magic prompts for different languages
         self.positive_magic = {
             "en": "Ultra HD, 4K, cinematic composition, high quality, detailed",
             "zh": "超清，4K，电影级构图，高质量，细节丰富",
         }
-        
+
     def _get_device(self) -> str:
         """Determine the best available device."""
         if torch.cuda.is_available():
@@ -51,39 +51,37 @@ class NunchakuModelLoader:
             device = "cpu"
             logger.warning("Using CPU device - generation will be slow")
         return device
-    
+
     def load_model(self, model_key: str, model_path: Path) -> bool:
         """
         Load a real Qwen-Image model using diffusers.
-        
+
         Args:
             model_key: The model identifier
             model_path: Path to the model file
-            
+
         Returns:
             bool: True if successful, False otherwise
         """
         try:
             logger.info(f"Loading real Qwen-Image model: {model_key}")
-            
-            # For now, we'll use the base Qwen-Image model
-            # In the future, this can be enhanced to use quantized models
-            model_name = "Qwen/Qwen-Image"
-            
-            logger.info(f"Loading model from: {model_name}")
-            
-            # Load the pipeline
+
+            # FIX: The original code was loading the base model from Hugging Face instead of the
+            # downloaded quantized model. This uses the local model file as intended.
+            logger.info(f"Loading model from local file: {model_path}")
+
+            # Load the pipeline from the single quantized file
             try:
-                self.pipeline = DiffusionPipeline.from_pretrained(
-                    model_name,
+                self.pipeline = DiffusionPipeline.from_single_file(
+                    model_path,
                     torch_dtype=torch.bfloat16 if self.device == "cuda" else torch.float32,
                     use_safetensors=True
                 )
-                logger.info("Pipeline loaded successfully")
+                logger.info("Pipeline loaded successfully from single file.")
             except Exception as e:
-                logger.error(f"Failed to load pipeline: {e}")
+                logger.error(f"Failed to load pipeline from single file: {e}")
                 return False
-            
+
             # Optimize the pipeline
             try:
                 # Use DPM++ 2M scheduler for better quality
@@ -93,7 +91,7 @@ class NunchakuModelLoader:
                 logger.info("Scheduler optimized")
             except Exception as e:
                 logger.warning(f"Failed to optimize scheduler: {e}")
-            
+
             # Move to device
             try:
                 if self.device == "cuda":
@@ -112,19 +110,19 @@ class NunchakuModelLoader:
                 logger.info(f"Pipeline moved to {self.device}")
             except Exception as e:
                 logger.warning(f"Failed to move pipeline to {self.device}: {e}")
-            
+
             # Set current model
             self.current_model = model_key
             self.model_loaded = True
-            
+
             logger.info(f"Successfully loaded real Qwen-Image model: {model_key}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error loading model {model_key}: {str(e)}")
             return False
-    
-    def generate_image(self, 
+
+    def generate_image(self,
                       prompt: str,
                       model_key: str,
                       inference_steps: int = 20,
@@ -134,7 +132,7 @@ class NunchakuModelLoader:
                       seed: int = -1) -> Tuple[str, Optional[Image.Image]]:
         """
         Generate a real image using the loaded Qwen-Image model.
-        
+
         Args:
             prompt: Text description of the image
             model_key: Model identifier
@@ -143,7 +141,7 @@ class NunchakuModelLoader:
             height: Image height in pixels
             cfg_value: Classifier-free guidance value
             seed: Random seed (-1 for random)
-            
+
         Returns:
             Tuple of (status_message, generated_image)
         """
@@ -151,20 +149,20 @@ class NunchakuModelLoader:
             # Validate inputs
             if not self.model_loaded or self.current_model != model_key:
                 return "Error: Please load a model first", None
-            
+
             if not prompt.strip():
                 return "Error: Please provide a prompt", None
-            
+
             # Validate parameters
             if not (64 <= width <= 2048) or not (64 <= height <= 2048):
                 return "Error: Width and height must be between 64 and 2048", None
-            
+
             if not (1 <= inference_steps <= 100):
                 return "Error: Inference steps must be between 1 and 100", None
-            
+
             if not (1.0 <= cfg_value <= 20.0):
                 return "Error: CFG value must be between 1.0 and 20.0", None
-            
+
             # Set seed if provided
             if seed != -1:
                 torch.manual_seed(seed)
@@ -178,7 +176,7 @@ class NunchakuModelLoader:
                 if torch.cuda.is_available():
                     torch.cuda.manual_seed(seed)
                 logger.info(f"Generated random seed: {seed}")
-            
+
             logger.info(f"Generating real image with parameters:")
             logger.info(f"  Prompt: {prompt}")
             logger.info(f"  Model: {model_key}")
@@ -186,11 +184,11 @@ class NunchakuModelLoader:
             logger.info(f"  Size: {width}x{height}")
             logger.info(f"  CFG: {cfg_value}")
             logger.info(f"  Seed: {seed}")
-            
+
             # Add positive magic prompt
             enhanced_prompt = prompt + " " + self.positive_magic["en"]
             logger.info(f"Enhanced prompt: {enhanced_prompt}")
-            
+
             # Generate the real image using the pipeline
             try:
                 with torch.no_grad():
@@ -204,12 +202,12 @@ class NunchakuModelLoader:
                         guidance_scale=cfg_value,
                         generator=torch.Generator(device=self.device).manual_seed(seed)
                     )
-                    
+
                     # Extract the image
                     image = result.images[0]
-                
+
                 logger.info("Real image generated successfully!")
-                
+
                 success_msg = (f"Real AI image generated successfully!\n"
                               f"Prompt: {prompt}\n"
                               f"Model: {model_key}\n"
@@ -217,19 +215,19 @@ class NunchakuModelLoader:
                               f"Size: {width}x{height}\n"
                               f"CFG: {cfg_value}\n"
                               f"Seed: {seed}")
-                
+
                 return success_msg, image
-                
+
             except Exception as e:
                 error_msg = f"Error during image generation: {str(e)}"
                 logger.error(error_msg)
                 return error_msg, None
-            
+
         except Exception as e:
             error_msg = f"Error generating image: {str(e)}"
             logger.error(error_msg)
             return error_msg, None
-    
+
     def unload_model(self):
         """Unload the current model to free memory."""
         try:
@@ -238,30 +236,30 @@ class NunchakuModelLoader:
                 if self.pipeline is not None:
                     del self.pipeline
                     self.pipeline = None
-                
+
                 # Clear current model
                 self.current_model = None
                 self.model_loaded = False
-                
+
                 # Clear CUDA cache if available
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
-                
+
                 logger.info("Model unloaded successfully")
                 return True
             else:
                 logger.info("No model currently loaded")
                 return True
-                
+
         except Exception as e:
             logger.error(f"Error unloading model: {str(e)}")
             return False
-    
+
     def get_model_info(self, model_key: str) -> dict:
         """Get information about a specific model."""
         if model_key not in self.available_models:
             return {"error": "Model not found"}
-        
+
         model_path = self.models_dir / self.available_models[model_key]["file"]
         info = {
             "name": self.available_models[model_key]["name"],
@@ -271,31 +269,31 @@ class NunchakuModelLoader:
             "file_size": model_path.stat().st_size if model_path.exists() else 0,
             "loaded": self.current_model == model_key and self.model_loaded
         }
-        
+
         return info
-    
+
     @property
     def available_models(self) -> dict:
         """Get dictionary of available models."""
         return {
             "svdq-int4_r32": {
                 "name": "Qwen-Image (INT4 Rank 32 Style)",
-                "file": "qwen-image-base.safetensors",
+                "file": "svdq-int4_r32-qwen-image.safetensors",
                 "description": "Fast generation, optimized for speed. Using base Qwen-Image model."
             },
             "svdq-int4_r128": {
                 "name": "Qwen-Image (INT4 Rank 128 Style)",
-                "file": "qwen-image-base.safetensors",
+                "file": "svdq-int4_r128-qwen-image.safetensors",
                 "description": "Better quality, balanced performance. Using base Qwen-Image model."
             },
             "svdq-fp4_r32": {
                 "name": "Qwen-Image (FP4 Rank 32 Style)",
-                "file": "qwen-image-base.safetensors",
+                "file": "svdq-fp4_r32-qwen-image.safetensors",
                 "description": "High quality, optimized for modern GPUs. Using base Qwen-Image model."
             },
             "svdq-fp4_r128": {
                 "name": "Qwen-Image (FP4 Rank 128 Style)",
-                "file": "qwen-image-base.safetensors",
+                "file": "svdq-fp4_r128-qwen-image.safetensors",
                 "description": "Maximum quality, best results. Using base Qwen-Image model."
             }
         }
