@@ -79,6 +79,15 @@ The interface will open in your browser at `http://localhost:7860`
    - **Seed**: -1 for random, or specific number for reproducibility
 3. Click "🎨 Generate Image"
 
+### Command-Line Usage
+Generate an image without launching the Gradio interface:
+
+```bash
+python examples/v1/qwen-image.py --prompt "A cute robot painting" --model svdq-int4_r32 --output robot.png
+```
+
+The script downloads the selected model automatically if it isn't already present.
+
 ## ⚙️ Parameter Guidelines
 
 ### Inference Steps
