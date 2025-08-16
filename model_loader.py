@@ -4,20 +4,32 @@ This module handles real image generation using the Qwen-Image model through dif
 """
 
 import torch
-import os
 from pathlib import Path
 import logging
 from typing import Optional, Tuple, Union
 import numpy as np
 from PIL import Image
 
-# Import diffusers components for real image generation
-from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
-from diffusers.utils import logging as diffusers_logging
+# Import diffusers components for real image generation.  DPMSolver requires
+# SciPy, which is not available in all environments (e.g., default Windows
+# installs).  Try to use it when possible, but fall back to a scheduler that
+# doesn't depend on SciPy if the import fails.
+from diffusers import DiffusionPipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+try:
+    from diffusers import DPMSolverMultistepScheduler as _Scheduler
+except Exception as e:  # pragma: no cover - best effort import
+    from diffusers import EulerDiscreteScheduler as _Scheduler
+    logger.warning(
+        "DPMSolverMultistepScheduler unavailable (%s); using EulerDiscreteScheduler",
+        e,
+    )
+
+from diffusers.utils import logging as diffusers_logging
 
 # Reduce diffusers logging verbosity
 diffusers_logging.set_verbosity_info()
@@ -84,13 +96,13 @@ class NunchakuModelLoader:
 
             # Optimize the pipeline
             try:
-                # Use DPM++ 2M scheduler for better quality
-                self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+                # Prefer DPM++ 2M when available; otherwise the fallback scheduler
+                self.pipeline.scheduler = _Scheduler.from_config(
                     self.pipeline.scheduler.config
                 )
-                logger.info("Scheduler optimized")
+                logger.info(f"Scheduler set to {_Scheduler.__name__}")
             except Exception as e:
-                logger.warning(f"Failed to optimize scheduler: {e}")
+                logger.warning(f"Failed to configure scheduler: {e}")
 
             # Move to device
             try:
@@ -279,21 +291,25 @@ class NunchakuModelLoader:
             "svdq-int4_r32": {
                 "name": "Qwen-Image (INT4 Rank 32 Style)",
                 "file": "svdq-int4_r32-qwen-image.safetensors",
-                "description": "Fast generation, optimized for speed. Using base Qwen-Image model."
+                "description": "Fast generation, optimized for speed. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r32-qwen-image.safetensors"
             },
             "svdq-int4_r128": {
                 "name": "Qwen-Image (INT4 Rank 128 Style)",
                 "file": "svdq-int4_r128-qwen-image.safetensors",
-                "description": "Better quality, balanced performance. Using base Qwen-Image model."
+                "description": "Better quality, balanced performance. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r128-qwen-image.safetensors"
             },
             "svdq-fp4_r32": {
                 "name": "Qwen-Image (FP4 Rank 32 Style)",
                 "file": "svdq-fp4_r32-qwen-image.safetensors",
-                "description": "High quality, optimized for modern GPUs. Using base Qwen-Image model."
+                "description": "High quality, optimized for modern GPUs. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r32-qwen-image.safetensors"
             },
             "svdq-fp4_r128": {
                 "name": "Qwen-Image (FP4 Rank 128 Style)",
                 "file": "svdq-fp4_r128-qwen-image.safetensors",
-                "description": "Maximum quality, best results. Using base Qwen-Image model."
+                "description": "Maximum quality, best results. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r128-qwen-image.safetensors"
             }
         }
