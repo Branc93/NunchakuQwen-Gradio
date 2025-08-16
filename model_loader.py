@@ -279,21 +279,25 @@ class NunchakuModelLoader:
             "svdq-int4_r32": {
                 "name": "Qwen-Image (INT4 Rank 32 Style)",
                 "file": "svdq-int4_r32-qwen-image.safetensors",
-                "description": "Fast generation, optimized for speed. Using base Qwen-Image model."
+                "description": "Fast generation, optimized for speed. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r32-qwen-image.safetensors"
             },
             "svdq-int4_r128": {
                 "name": "Qwen-Image (INT4 Rank 128 Style)",
                 "file": "svdq-int4_r128-qwen-image.safetensors",
-                "description": "Better quality, balanced performance. Using base Qwen-Image model."
+                "description": "Better quality, balanced performance. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r128-qwen-image.safetensors"
             },
             "svdq-fp4_r32": {
                 "name": "Qwen-Image (FP4 Rank 32 Style)",
                 "file": "svdq-fp4_r32-qwen-image.safetensors",
-                "description": "High quality, optimized for modern GPUs. Using base Qwen-Image model."
+                "description": "High quality, optimized for modern GPUs. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r32-qwen-image.safetensors"
             },
             "svdq-fp4_r128": {
                 "name": "Qwen-Image (FP4 Rank 128 Style)",
                 "file": "svdq-fp4_r128-qwen-image.safetensors",
-                "description": "Maximum quality, best results. Using base Qwen-Image model."
+                "description": "Maximum quality, best results. Using base Qwen-Image model.",
+                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r128-qwen-image.safetensors"
             }
         }
