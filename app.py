@@ -1,40 +1,7 @@
 import gradio as gr
-import torch
-import os
-from pathlib import Path
-import hashlib
 import requests
-from tqdm import tqdm
-import time
 from model_loader import NunchakuModelLoader
-
-# Model configurations
-MODEL_CONFIGS = {
-    "svdq-int4_r32": {
-        "name": "SVDQuant INT4 Rank 32",
-        "file": "svdq-int4_r32-qwen-image.safetensors",
-        "description": "For non-Blackwell GPUs (pre-50-series). Fastest, lower quality.",
-        "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r32-qwen-image.safetensors"
-    },
-    "svdq-int4_r128": {
-        "name": "SVDQuant INT4 Rank 128", 
-        "file": "svdq-int4_r128-qwen-image.safetensors",
-        "description": "For non-Blackwell GPUs (pre-50-series). Better quality, slower.",
-        "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r128-qwen-image.safetensors"
-    },
-    "svdq-fp4_r32": {
-        "name": "SVDQuant FP4 Rank 32",
-        "file": "svdq-fp4_r32-qwen-image.safetensors", 
-        "description": "For Blackwell GPUs (50-series). Fastest, lower quality.",
-        "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r32-qwen-image.safetensors"
-    },
-    "svdq-fp4_r128": {
-        "name": "SVDQuant FP4 Rank 128",
-        "file": "svdq-fp4_r128-qwen-image.safetensors",
-        "description": "For Blackwell GPUs (50-series). Best quality, slowest.",
-        "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r128-qwen-image.safetensors"
-    }
-}
+from config import MODEL_CONFIGS
 
 class NunchakuQwenInterface:
     def __init__(self):

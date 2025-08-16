@@ -6,9 +6,9 @@ This module handles real image generation using the Qwen-Image model through dif
 import torch
 from pathlib import Path
 import logging
-from typing import Optional, Tuple, Union
-import numpy as np
+from typing import Optional, Tuple
 from PIL import Image
+from config import MODEL_CONFIGS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -305,14 +305,13 @@ class NunchakuModelLoader:
 
     def get_model_info(self, model_key: str) -> dict:
         """Get information about a specific model."""
-        if model_key not in self.available_models:
+        if model_key not in MODEL_CONFIGS:
             return {"error": "Model not found"}
-
-        model_path = self.models_dir / self.available_models[model_key]["file"]
+        model_path = self.models_dir / MODEL_CONFIGS[model_key]["file"]
         info = {
-            "name": self.available_models[model_key]["name"],
-            "description": self.available_models[model_key]["description"],
-            "file": self.available_models[model_key]["file"],
+            "name": MODEL_CONFIGS[model_key]["name"],
+            "description": MODEL_CONFIGS[model_key]["description"],
+            "file": MODEL_CONFIGS[model_key]["file"],
             "downloaded": model_path.exists(),
             "file_size": model_path.stat().st_size if model_path.exists() else 0,
             "loaded": self.current_model == model_key and self.model_loaded
@@ -323,29 +322,4 @@ class NunchakuModelLoader:
     @property
     def available_models(self) -> dict:
         """Get dictionary of available models."""
-        return {
-            "svdq-int4_r32": {
-                "name": "Qwen-Image (INT4 Rank 32 Style)",
-                "file": "svdq-int4_r32-qwen-image.safetensors",
-                "description": "Fast generation, optimized for speed. Using base Qwen-Image model.",
-                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r32-qwen-image.safetensors"
-            },
-            "svdq-int4_r128": {
-                "name": "Qwen-Image (INT4 Rank 128 Style)",
-                "file": "svdq-int4_r128-qwen-image.safetensors",
-                "description": "Better quality, balanced performance. Using base Qwen-Image model.",
-                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-int4_r128-qwen-image.safetensors"
-            },
-            "svdq-fp4_r32": {
-                "name": "Qwen-Image (FP4 Rank 32 Style)",
-                "file": "svdq-fp4_r32-qwen-image.safetensors",
-                "description": "High quality, optimized for modern GPUs. Using base Qwen-Image model.",
-                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r32-qwen-image.safetensors"
-            },
-            "svdq-fp4_r128": {
-                "name": "Qwen-Image (FP4 Rank 128 Style)",
-                "file": "svdq-fp4_r128-qwen-image.safetensors",
-                "description": "Maximum quality, best results. Using base Qwen-Image model.",
-                "url": "https://huggingface.co/nunchaku-tech/nunchaku-qwen-image/resolve/main/svdq-fp4_r128-qwen-image.safetensors"
-            }
-        }
+        return MODEL_CONFIGS
